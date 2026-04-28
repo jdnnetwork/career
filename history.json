@@ -1,0 +1,68 @@
+{
+  "current_cycle": 1,
+  "remaining_in_cycle": [
+    "마케팅",
+    "재무회계",
+    "인사",
+    "생산관리",
+    "IT개발",
+    "제약영업",
+    "품질관리",
+    "물류SCM"
+  ],
+  "used_combos": [
+    "영업|1~3년차|공기업→사기업",
+    "MD바잉|6개월~1년차|같은직무+업계이동",
+    "홍보|1~3년차|같은직무이동"
+  ],
+  "history": [
+    {
+      "date": "2026-04-29",
+      "cycle": 1,
+      "outputs": [
+        {
+          "job": "영업",
+          "year": "1~3년차",
+          "situation": "공기업→사기업",
+          "formats": [
+            "F2",
+            "F5"
+          ],
+          "person_name": "정하늘",
+          "files": [
+            "outputs/2026-04-29/경력기술서_영업_F2.docx",
+            "outputs/2026-04-29/경력기술서_영업_F5.docx"
+          ]
+        },
+        {
+          "job": "MD바잉",
+          "year": "6개월~1년차",
+          "situation": "같은직무+업계이동",
+          "formats": [
+            "F1",
+            "F6"
+          ],
+          "person_name": "정수아",
+          "files": [
+            "outputs/2026-04-29/경력기술서_MD바잉_F1.docx",
+            "outputs/2026-04-29/경력기술서_MD바잉_F6.docx"
+          ]
+        },
+        {
+          "job": "홍보",
+          "year": "1~3년차",
+          "situation": "같은직무이동",
+          "formats": [
+            "F3",
+            "F5"
+          ],
+          "person_name": "정유진",
+          "files": [
+            "outputs/2026-04-29/경력기술서_홍보_F3.docx",
+            "outputs/2026-04-29/경력기술서_홍보_F5.docx"
+          ]
+        }
+      ]
+    }
+  ]
+}
