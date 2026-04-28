@@ -19,6 +19,7 @@ import os
 import random
 import re
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -189,7 +190,7 @@ PERSONA_NAME: <한글 이름>
 
 def call_claude(skill_md: str, job: str, year: str, situation: str,
                 f1: str, f2: str) -> str:
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(max_retries=4, timeout=600.0)
     today = datetime.now(KST).strftime("%Y-%m-%d")
     user_msg = USER_TEMPLATE.format(
         job=job, year=year, situation=situation,
@@ -197,32 +198,46 @@ def call_claude(skill_md: str, job: str, year: str, situation: str,
         f2=f2, f2_name=FORMAT_NAMES[f2],
         today=today,
     )
-    chunks: list[str] = []
-    with client.messages.stream(
-        model=MODEL,
-        max_tokens=MAX_TOKENS,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "high"},
-        system=[
-            {
-                "type": "text",
-                "text": skill_md,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": user_msg}],
-    ) as stream:
-        for text in stream.text_stream:
-            chunks.append(text)
-        final = stream.get_final_message()
-    print(
-        f"[{job}] usage: in={final.usage.input_tokens}, "
-        f"out={final.usage.output_tokens}, "
-        f"cache_read={final.usage.cache_read_input_tokens}, "
-        f"cache_create={final.usage.cache_creation_input_tokens}",
-        file=sys.stderr,
-    )
-    return "".join(chunks)
+
+    last_err: Exception | None = None
+    for attempt in range(1, 5):
+        try:
+            chunks: list[str] = []
+            with client.messages.stream(
+                model=MODEL,
+                max_tokens=MAX_TOKENS,
+                thinking={"type": "adaptive"},
+                output_config={"effort": "high"},
+                system=[
+                    {
+                        "type": "text",
+                        "text": skill_md,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                messages=[{"role": "user", "content": user_msg}],
+            ) as stream:
+                for text in stream.text_stream:
+                    chunks.append(text)
+                final = stream.get_final_message()
+            print(
+                f"[{job}] usage: in={final.usage.input_tokens}, "
+                f"out={final.usage.output_tokens}, "
+                f"cache_read={final.usage.cache_read_input_tokens}, "
+                f"cache_create={final.usage.cache_creation_input_tokens}",
+                file=sys.stderr,
+            )
+            return "".join(chunks)
+        except (anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
+            last_err = e
+            backoff = 5 * (2 ** (attempt - 1))
+            print(
+                f"[{job}] {type(e).__name__} on attempt {attempt}/4: {e}. "
+                f"sleeping {backoff}s",
+                file=sys.stderr,
+            )
+            time.sleep(backoff)
+    raise RuntimeError(f"call_claude failed after retries: {last_err}")
 
 
 def parse_response(text: str, f1: str, f2: str) -> tuple[str, str, str]:
