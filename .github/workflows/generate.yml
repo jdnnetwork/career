@@ -1,0 +1,39 @@
+name: Generate daily career descriptions
+
+on:
+  schedule:
+    # 매주 월~금 07:00 KST = 전날 22:00 UTC (일~목)
+    - cron: "0 22 * * 0,1,2,3,4"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Generate docx
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/generate.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add outputs/ history.json
+          if git diff --cached --quiet; then
+            echo "no new outputs to commit"
+            exit 0
+          fi
+          git commit -m "daily: career descriptions generated ($(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M KST'))"
+          git push
