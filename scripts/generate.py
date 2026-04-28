@@ -190,7 +190,8 @@ PERSONA_NAME: <한글 이름>
 
 def call_claude(skill_md: str, job: str, year: str, situation: str,
                 f1: str, f2: str) -> str:
-    client = anthropic.Anthropic(max_retries=4, timeout=600.0)
+    api_key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+    client = anthropic.Anthropic(api_key=api_key, max_retries=4, timeout=600.0)
     today = datetime.now(KST).strftime("%Y-%m-%d")
     user_msg = USER_TEMPLATE.format(
         job=job, year=year, situation=situation,
